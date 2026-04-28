@@ -1,0 +1,35 @@
+services:
+  api:
+    image: ghcr.io/${GHCR_OWNER}/ubearitz-backend:latest
+    container_name: ubearitz-api
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql://${MARIADB_USER}:${MARIADB_PASSWORD}@mariadb:3306/${MARIADB_DATABASE}
+      JWT_SECRET: ${JWT_SECRET}
+      HOST: 0.0.0.0
+      PORT: 3001
+    ports:
+      - "3001:3001"
+
+  mariadb:
+    image: mariadb:11.4
+    container_name: ubearitz-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p${MARIADB_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

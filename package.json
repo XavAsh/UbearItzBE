@@ -5,13 +5,22 @@
   "type": "module",
   "scripts": {
     "dev": "node --import tsx src/index.ts",
-    "build": "tsc",
+    "build": "npm run prisma:generate && tsc",
     "start": "node dist/index.js",
+    "db:up": "docker compose up -d mariadb",
+    "db:down": "docker compose down",
     "prisma:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:init": "npm run db:up && npm run prisma:generate && npm run db:migrate:deploy",
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "test:unit": "vitest run src/services/__tests__",
+    "test:integration:prepare": "dotenv -e .env.test -- node scripts/prepare-test-db.mjs && dotenv -e .env.test -- prisma migrate deploy",
+    "test:integration": "npm run test:integration:prepare && dotenv -e .env.test -- vitest run __tests__/integration",
+    "test": "npm run prisma:generate && npm run test:unit && npm run test:integration",
+    "test:coverage": "npm run prisma:generate && npm run test:integration:prepare && dotenv -e .env.test -- vitest run --coverage"
   },
   "prisma": {
     "seed": "node --import tsx prisma/seed.ts"
@@ -36,9 +45,12 @@
   },
   "devDependencies": {
     "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "^4.1.5",
+    "dotenv-cli": "^11.0.0",
     "prisma": "^7.8.0",
     "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.5"
   },
   "overrides": {
     "@fastify/static": "^9.1.3",

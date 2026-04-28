@@ -3,37 +3,84 @@
 ## Setup
 
 ```bash
-npm install --prefix ./backend
+npm install
 ```
 
-## Database (MySQL via Docker)
+## Start the backend easily
 
-Start MySQL:
+From `ubearitzBE/`, run:
 
 ```bash
-docker compose -f ./backend/docker-compose.yml up -d
+npm run db:init
+npm run dev
 ```
 
-Configure `backend/.env` (already provided for local dev):
+That starts:
 
-- `DATABASE_URL="mysql://ubearitz:ubearitz_password@localhost:3306/ubearitz"`
+- the API on `http://localhost:3001`
+- MariaDB on `localhost:3306`
 
-Run the initial migration (creates tables and generates Prisma Client):
+Stop the database with:
 
 ```bash
-npm --prefix ./backend run db:migrate -- --name init
+npm run db:down
 ```
 
-Seed some dev data:
+If you already had an older MySQL container using port `3306`, clear it once:
 
 ```bash
-npm --prefix ./backend run db:seed
+docker compose down --remove-orphans
+npm run db:init
 ```
 
-## Run the API
+## Production-style run
 
 ```bash
-npm --prefix ./backend run dev
+npm run build
+npm start
+```
+
+## Docker Compose
+
+```bash
+docker compose up -d
+```
+
+## CI/CD deployment (minimal VPS)
+
+The workflow at `.github/workflows/ci.yml` does:
+
+- run backend tests + build
+- push backend Docker image to GHCR on `main`
+- deploy on your VPS over SSH on `main`
+
+Required GitHub repository secrets:
+
+- `JWT_SECRET`
+- `MARIADB_ROOT_PASS`
+- `VPS_HOST`
+- `VPS_USER`
+- `VPS_SSH_KEY`
+- `VPS_PORT` (optional, default `22`)
+- `VPS_APP_DIR` (example: `/opt/ubearitz`)
+- `GHCR_USERNAME`
+- `GHCR_TOKEN` (PAT with `read:packages`)
+- `PROD_JWT_SECRET`
+- `PROD_MARIADB_DATABASE`
+- `PROD_MARIADB_USER`
+- `PROD_MARIADB_PASSWORD`
+- `PROD_MARIADB_ROOT_PASSWORD`
+
+Production compose files:
+
+- `docker-compose.prod.yml`
+- `.env.production.example`
+
+## Tests
+
+```bash
+npm test
+npm run test:coverage
 ```
 
 Endpoints:

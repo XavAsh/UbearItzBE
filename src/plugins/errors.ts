@@ -8,7 +8,9 @@ export type { ProblemDetails };
 export function registerErrorHandling(app: FastifyInstance) {
   app.setErrorHandler(async (err: FastifyError | HttpError, _req: FastifyRequest, reply: FastifyReply) => {
     const isHttpError = err instanceof HttpError;
-    const status = (isHttpError ? err.status : (err.statusCode ?? undefined)) ?? 500;
+    const prismaCode = (err as FastifyError & { code?: string }).code;
+    const isPrismaTooLong = prismaCode === "P2000";
+    const status = isPrismaTooLong ? 400 : (isHttpError ? err.status : (err.statusCode ?? undefined)) ?? 500;
 
     // Fastify AJV validation errors: treat as 400 with a clear message.
     const isValidation = (err as FastifyError).code === "FST_ERR_VALIDATION";
@@ -28,6 +30,13 @@ export function registerErrorHandling(app: FastifyInstance) {
               : "Request payload is invalid.",
             status: 400,
           }
+        : isPrismaTooLong
+          ? {
+              type: "https://example.com/problems/validation-error",
+              title: "Validation error",
+              detail: "One of the provided fields is too long.",
+              status: 400,
+            }
         : {
             type: "about:blank",
             title: status >= 500 ? "Internal Server Error" : "Request Error",

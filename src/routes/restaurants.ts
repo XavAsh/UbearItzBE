@@ -49,7 +49,7 @@ export function registerRestaurantsRoutes(app: FastifyInstance) {
         body: Type.Object({
           name: Type.Optional(Type.String({ minLength: 1, maxLength: 120 })),
           address: Type.Optional(Type.Union([Type.String({ minLength: 1, maxLength: 255 }), Type.Null()])),
-          imageUrl: Type.Optional(Type.Union([Type.String({ maxLength: 400 }), Type.Null()])),
+          imageUrl: Type.Optional(Type.Union([Type.String({ maxLength: 191 }), Type.Null()])),
         }),
       },
     },
@@ -71,7 +71,7 @@ export function registerRestaurantsRoutes(app: FastifyInstance) {
           name: Type.String({ minLength: 1, maxLength: 120 }),
           slug: Slug,
           address: Type.Optional(Type.Union([Type.String({ minLength: 1, maxLength: 255 }), Type.Null()])),
-          imageUrl: Type.Optional(Type.Union([Type.String({ maxLength: 400 }), Type.Null()])),
+          imageUrl: Type.Optional(Type.Union([Type.String({ maxLength: 191 }), Type.Null()])),
         }),
       },
     },
