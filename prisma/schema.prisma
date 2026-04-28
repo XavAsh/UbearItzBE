@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserRole {
+  USER
+  RESTAURANT
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PAID
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  role         UserRole @default(USER)
+
+  restaurants  Restaurant[] @relation("RestaurantOwner")
+  orders       Order[]
+  refreshTokens RefreshToken[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Restaurant {
+  id        String @id @default(cuid())
+  name      String
+  slug      String @unique
+  address   String?
+  imageUrl  String?
+
+  ownerId   String
+  owner     User   @relation("RestaurantOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  dishes    Dish[]
+  orders    Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Dish {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  name         String
+  description  String?
+  priceCents   Int
+  imageUrl     String?
+  isActive     Boolean    @default(true)
+
+  orderItems   OrderItem[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([restaurantId])
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  userId       String
+  restaurantId String
+
+  status       OrderStatus @default(PENDING)
+  totalCents   Int         @default(0)
+
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  items        OrderItem[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([restaurantId])
+}
+
+model OrderItem {
+  id             String @id @default(cuid())
+  orderId        String
+  dishId         String
+  quantity       Int
+  unitPriceCents Int
+
+  order          Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  dish           Dish  @relation(fields: [dishId], references: [id], onDelete: Restrict)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([orderId, dishId])
+  @@index([orderId])
+  @@index([dishId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
